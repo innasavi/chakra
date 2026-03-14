@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Какая чакра у вас заблокирована?</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Cinzel:wght@400;500;600&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --dark: #0a0a0f;
+    --deep: #0f0d1a;
+    --text: #e8e0d0;
+    --muted: #8a7e6e;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'Raleway', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  .star {
+    position: absolute; border-radius: 50%; background: white;
+    animation: twinkle var(--d, 3s) ease-in-out infinite alternate;
+  }
+  @keyframes twinkle {
+    from { opacity: 0.1; transform: scale(1); }
+    to   { opacity: 0.8; transform: scale(1.3); }
+  }
+  .ambient {
+    position: fixed; width: 600px; height: 600px; border-radius: 50%;
+    filter: blur(120px); pointer-events: none; z-index: 0; opacity: 0.12;
+    top: -100px; left: 50%; transform: translateX(-50%);
+    background: radial-gradient(circle, #7b3fa0, #3a1060);
+    animation: pulse-ambient 6s ease-in-out infinite alternate;
+  }
+  @keyframes pulse-ambient {
+    from { opacity: 0.1; transform: translateX(-50%) scale(1); }
+    to   { opacity: 0.18; transform: translateX(-50%) scale(1.15); }
+  }
+  .container {
+    position: relative; z-index: 1;
+    max-width: 640px; margin: 0 auto;
+    padding: 40px 24px 80px;
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .eyebrow {
+    font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 4px;
+    color: var(--gold); text-transform: uppercase; margin-bottom: 20px;
+    opacity: 0; animation: fadeUp 0.8s 0.2s forwards;
+  }
+  .title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(32px, 7vw, 52px); font-weight: 300;
+    line-height: 1.15; text-align: center; margin-bottom: 16px;
+    opacity: 0; animation: fadeUp 0.8s 0.4s forwards;
+  }
+  .title em { font-style: italic; color: var(--gold-light); }
+  .subtitle {
+    font-size: 14px; font-weight: 300; color: var(--muted);
+    text-align: center; line-height: 1.7; max-width: 420px; margin-bottom: 40px;
+    opacity: 0; animation: fadeUp 0.8s 0.6s forwards;
+  }
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    width: 100%; max-width: 360px; margin-bottom: 36px;
+    opacity: 0; animation: fadeUp 0.8s 0.7s forwards;
+  }
+  .divider-line { flex: 1; height: 1px; background: linear-gradient(to right, transparent, var(--gold), transparent); }
+  .divider-symbol { color: var(--gold); font-size: 16px; }
+  .card {
+    width: 100%; background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(201,168,76,0.2); border-radius: 2px;
+    padding: 36px 32px; backdrop-filter: blur(10px);
+    opacity: 0; animation: fadeUp 0.8s 0.8s forwards;
+    position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(to right, transparent, var(--gold), transparent);
+  }
+  .card-label {
+    font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 3px;
+    color: var(--gold); text-transform: uppercase; margin-bottom: 24px; text-align: center;
+  }
+  .input-row { display: flex; gap: 12px; margin-bottom: 24px; justify-content: center; }
+  .input-group { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .input-group label { font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+  .num-input {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 2px; color: var(--gold-light);
+    font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 300;
+    text-align: center; outline: none;
+    transition: border-color 0.3s, background 0.3s;
+    -moz-appearance: textfield;
+  }
+  .num-input::-webkit-outer-spin-button,
+  .num-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .num-input:focus { border-color: var(--gold); background: rgba(201,168,76,0.06); }
+  .num-input.day   { width: 72px; height: 64px; }
+  .num-input.month { width: 72px; height: 64px; }
+  .num-input.year  { width: 104px; height: 64px; }
+  .sep {
+    font-family: 'Cormorant Garamond', serif; font-size: 28px;
+    color: var(--gold); align-self: flex-end; padding-bottom: 16px; opacity: 0.5;
+  }
+  .btn {
+    width: 100%; padding: 16px;
+    background: linear-gradient(135deg, #c9a84c, #a07830);
+    border: none; border-radius: 2px; color: #0a0a0f;
+    font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 3px;
+    text-transform: uppercase; cursor: pointer; transition: all 0.3s;
+    position: relative; overflow: hidden;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(201,168,76,0.3); }
+  .error-msg {
+    color: #e07070; font-size: 12px; text-align: center;
+    margin-top: -12px; margin-bottom: 16px; display: none; letter-spacing: 1px;
+  }
+  /* Result */
+  .result-wrap {
+    width: 100%; margin-top: 32px;
+    opacity: 0; transform: translateY(20px);
+    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+  }
+  .result-wrap.visible { opacity: 1; transform: translateY(0); pointer-events: all; }
+  .chakra-visual { text-align: center; margin-bottom: 28px; }
+  .chakra-symbol { font-size: 64px; display: block; animation: float 4s ease-in-out infinite; filter: drop-shadow(0 0 20px var(--chakra-color, #888)); }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  .chakra-name { font-family: 'Cinzel', serif; font-size: 22px; letter-spacing: 3px; margin-top: 12px; color: var(--chakra-color, var(--gold)); }
+  .chakra-sanskrit { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; color: var(--muted); letter-spacing: 2px; margin-top: 4px; }
+  .result-card {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 2px; padding: 28px; position: relative; overflow: hidden;
+  }
+  .result-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(to right, transparent, var(--chakra-color, var(--gold)), transparent);
+  }
+  .block-label { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+  .block-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400; color: var(--gold-light); margin-bottom: 12px; line-height: 1.3; }
+  .block-text { font-size: 14px; font-weight: 300; line-height: 1.8; color: rgba(232,224,208,0.8); margin-bottom: 20px; }
+  .signs-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+  .sign-item { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; font-weight: 300; color: rgba(232,224,208,0.75); line-height: 1.5; }
+  .sign-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--chakra-color, var(--gold)); flex-shrink: 0; margin-top: 7px; }
+  .separator { height: 1px; background: linear-gradient(to right, transparent, rgba(201,168,76,0.2), transparent); margin: 20px 0; }
+  .cta-block { text-align: center; }
+  .cta-text { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-style: italic; line-height: 1.5; color: var(--text); margin-bottom: 20px; }
+  .cta-btn {
+    display: inline-block; padding: 14px 32px;
+    background: transparent; border: 1px solid var(--gold); border-radius: 2px;
+    color: var(--gold); font-family: 'Cinzel', serif; font-size: 10px;
+    letter-spacing: 3px; text-transform: uppercase; cursor: pointer;
+    text-decoration: none; transition: all 0.3s;
+    animation: glow-pulse 2.5s ease-in-out infinite;
+  }
+  @keyframes glow-pulse {
+    0%,100% { box-shadow: 0 0 10px rgba(201,168,76,0.2); }
+    50%      { box-shadow: 0 0 25px rgba(201,168,76,0.5), 0 0 50px rgba(201,168,76,0.15); }
+  }
+  .cta-btn:hover { background: rgba(201,168,76,0.1); transform: translateY(-2px); }
+  .number-badge {
+    display: inline-block; font-family: 'Cormorant Garamond', serif;
+    font-size: 48px; font-weight: 300; color: var(--gold);
+    opacity: 0.15; position: absolute; top: 12px; right: 20px; line-height: 1; pointer-events: none;
+  }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .footer { margin-top: 48px; text-align: center; font-size: 11px; color: rgba(138,126,110,0.4); letter-spacing: 2px; font-family: 'Cinzel', serif; }
+
+/* ═══ MODAL ═══ */
+.modal-overlay {
+position: fixed; inset: 0; z-index: 100;
+background: rgba(5,4,12,0.88); backdrop-filter: blur(10px);
+display: flex; align-items: center; justify-content: center; padding: 20px;
+opacity: 0; pointer-events: none; transition: opacity 0.4s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+width: 100%; max-width: 420px; background: #0f0d1a;
+border: 1px solid rgba(201,168,76,0.28); border-radius: 4px;
+padding: 40px 32px 36px; position: relative; overflow: hidden;
+transform: translateY(30px) scale(0.97);
+transition: transform 0.45s cubic-bezier(0.16,1,0.3,1);
+max-height: 90vh; overflow-y: auto;
+}
+.modal-overlay.open .modal { transform: translateY(0) scale(1); }
+.modal::before {
+content: ‘’; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+background: linear-gradient(to right, transparent, var(–gold), transparent);
+}
+.modal-close {
+position: absolute; top: 14px; right: 16px;
+background: none; border: none; color: var(–muted);
+font-size: 18px; cursor: pointer; transition: color 0.2s; padding: 4px;
+}
+.modal-close:hover { color: var(–gold); }
+.modal-eyebrow { font-family: ‘Cinzel’, serif; font-size: 9px; letter-spacing: 3px; color: var(–gold); text-transform: uppercase; margin-bottom: 14px; text-align: center; }
+.modal-title { font-family: ‘Cormorant Garamond’, serif; font-size: 26px; font-weight: 300; text-align: center; line-height: 1.3; margin-bottom: 8px; color: var(–text); }
+.modal-title em { font-style: italic; color: var(–gold-light); }
+.modal-sub { font-size: 13px; font-weight: 300; color: var(–muted); text-align: center; line-height: 1.6; margin-bottom: 28px; }
+.modal-field { margin-bottom: 14px; }
+.modal-field label { display: block; font-size: 10px; letter-spacing: 2px; color: var(–muted); text-transform: uppercase; margin-bottom: 7px; }
+.modal-input-icon { position: relative; }
+.modal-input-icon .icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 15px; pointer-events: none; }
+.modal-input-icon .modal-input { padding-left: 42px; }
+.modal-input {
+width: 100%; background: rgba(255,255,255,0.04);
+border: 1px solid rgba(201,168,76,0.2); border-radius: 2px;
+padding: 13px 16px; color: var(–text);
+font-family: ‘Raleway’, sans-serif; font-size: 14px; font-weight: 300;
+outline: none; transition: border-color 0.3s, background 0.3s;
+}
+.modal-input::placeholder { color: rgba(138,126,110,0.5); }
+.modal-input:focus { border-color: var(–gold); background: rgba(201,168,76,0.05); }
+.modal-btn {
+width: 100%; margin-top: 20px; padding: 15px;
+background: linear-gradient(135deg, #c9a84c, #a07830);
+border: none; border-radius: 2px; color: #0a0a0f;
+font-family: ‘Cinzel’, serif; font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+cursor: pointer; transition: all 0.3s;
+}
+.modal-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(201,168,76,0.35); }
+.modal-privacy { font-size: 10px; color: rgba(138,126,110,0.4); text-align: center; margin-top: 14px; line-height: 1.5; }
+
+/* Реквизиты */
+.pay-box {
+background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+border-radius: 3px; padding: 14px 16px; margin-bottom: 10px;
+display: flex; align-items: center; gap: 12px;
+}
+.pay-box-info { flex: 1; text-align: left; }
+.pay-box-label { font-size: 10px; letter-spacing: 2px; color: var(–muted); text-transform: uppercase; margin-bottom: 3px; }
+.pay-box-value { font-family: ‘Cormorant Garamond’, serif; font-size: 20px; color: var(–text); letter-spacing: 1px; }
+.copy-btn {
+background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.3);
+border-radius: 2px; color: var(–gold); font-size: 9px; letter-spacing: 1px;
+padding: 7px 10px; cursor: pointer; font-family: ‘Cinzel’, serif;
+white-space: nowrap; transition: all 0.2s;
+}
+.copy-btn:hover { background: rgba(201,168,76,0.2); }
+.copy-btn.copied { background: rgba(50,200,100,0.15); border-color: rgba(50,200,100,0.4); color: #5ec97a; }
+
+.success-tg {
+display: inline-flex; align-items: center; gap: 10px;
+padding: 13px 28px; border: 1px solid var(–gold); border-radius: 2px;
+color: var(–gold); font-family: ‘Cinzel’, serif; font-size: 10px;
+letter-spacing: 2px; text-transform: uppercase; text-decoration: none;
+transition: all 0.3s; animation: glow-pulse 2.5s ease-in-out infinite;
+}
+.success-tg:hover { background: rgba(201,168,76,0.1); transform: translateY(-1px); }
+</style>
+
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+<div class="ambient"></div>
+
+<div class="container">
+  <div class="eyebrow">Чакронумерология · Бесплатный разбор</div>
+  <h1 class="title">Какая чакра у вас <em>заблокирована?</em></h1>
+  <p class="subtitle">Введите дату рождения — и узнайте, через какую чакру утекает ваша энергия, деньги и любовь</p>
+
+  <div class="divider">
+    <div class="divider-line"></div>
+    <span class="divider-symbol">✦</span>
+    <div class="divider-line"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Ваша дата рождения</div>
+    <div class="input-row">
+      <div class="input-group">
+        <label>День</label>
+        <input class="num-input day" id="inp-day" type="number" min="1" max="31" placeholder="ДД">
+      </div>
+      <span class="sep">·</span>
+      <div class="input-group">
+        <label>Месяц</label>
+        <input class="num-input month" id="inp-month" type="number" min="1" max="12" placeholder="ММ">
+      </div>
+      <span class="sep">·</span>
+      <div class="input-group">
+        <label>Год</label>
+        <input class="num-input year" id="inp-year" type="number" min="1920" max="2015" placeholder="ГГГГ">
+      </div>
+    </div>
+    <div class="error-msg" id="error-msg">Пожалуйста, введите корректную дату рождения</div>
+    <button class="btn" onclick="calculate()">Узнать свою чакру</button>
+  </div>
+
+  <!-- Результат -->
+
+  <div class="result-wrap" id="result">
+    <div class="chakra-visual">
+      <span class="chakra-symbol" id="chakra-symbol">☯</span>
+      <div class="chakra-name" id="chakra-name">АНАХАТА</div>
+      <div class="chakra-sanskrit" id="chakra-sanskrit">Anahata · 4-я чакра</div>
+    </div>
+    <div class="result-card">
+      <span class="number-badge" id="number-badge">4</span>
+      <div class="block-label">Ваша заблокированная чакра</div>
+      <div class="block-title" id="result-title"></div>
+      <div class="block-text" id="result-text"></div>
+      <div class="block-label">Признаки блокировки у вас:</div>
+      <div class="signs-list" id="signs-list"></div>
+      <div class="separator"></div>
+      <div class="cta-block">
+        <div class="cta-text" id="cta-text"></div>
+        <a class="cta-btn" href="#" onclick="openModal(); return false;">Получить полный разбор</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">✦ &nbsp; Инна Сави · Чакронумерология &nbsp; ✦</div>
+</div>
+
+<!-- ═══════════════════ MODAL ═══════════════════ -->
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+
+```
+<!-- ШАГ 1: ФОРМА -->
+<div id="step-form">
+  <div class="modal-eyebrow">Шаг 1 из 2 · Ваши данные</div>
+  <h2 class="modal-title">Куда отправить <em>разбор?</em></h2>
+  <p class="modal-sub">Укажите имя и Telegram — я свяжусь с вами после оплаты</p>
+
+  <div class="modal-field">
+    <label>Ваше имя</label>
+    <div class="modal-input-icon">
+      <span class="icon">✨</span>
+      <input class="modal-input" id="field-name" type="text" placeholder="Как вас зовут?">
+    </div>
+  </div>
+  <div class="modal-field">
+    <label>Telegram или WhatsApp</label>
+    <div class="modal-input-icon">
+      <span class="icon">📲</span>
+      <input class="modal-input" id="field-contact" type="text" placeholder="@username или +7 777 000 00 00">
+    </div>
+  </div>
+  <div class="modal-field">
+    <label>Ваш главный вопрос (необязательно)</label>
+    <select class="modal-input" id="field-question" style="cursor:pointer;background:#0f0d1a;color:#e8e0d0;">
+      <option value="" disabled selected>Выберите тему разбора...</option>
+      <option>💰 Почему деньги не задерживаются?</option>
+      <option>💔 Почему я не могу найти партнёра?</option>
+      <option>😔 Почему я много работаю, но нет результата?</option>
+      <option>😤 Почему я не могу поставить границы?</option>
+      <option>🌀 Почему я чувствую себя потерянной?</option>
+      <option>✨ Хочу полный разбор всех чакр</option>
+    </select>
+  </div>
+  <div id="form-error" style="color:#e07070;font-size:12px;text-align:center;margin-top:8px;display:none;">
+    Пожалуйста, заполните имя и контакт
+  </div>
+  <button class="modal-btn" onclick="goToPayment()">Далее → к оплате</button>
+  <p class="modal-privacy">🔒 Ваши данные не передаются третьим лицам</p>
+</div>
+
+<!-- ШАГ 2: ОПЛАТА -->
+<div id="step-payment" style="display:none;">
+  <div class="modal-eyebrow">Шаг 2 из 2 · Оплата</div>
+  <h2 class="modal-title" style="margin-bottom:6px;">Оплатите разбор</h2>
+  <p class="modal-sub">После оплаты нажмите кнопку ниже — я свяжусь с вами в течение 15 минут</p>
+
+  <!-- Цена -->
+  <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.3);border-radius:4px;padding:14px 20px;margin-bottom:16px;text-align:center;">
+    <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:4px;">СТОИМОСТЬ РАЗБОРА</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:300;color:var(--gold-light);line-height:1;">8 490 ₸</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px;">Чакронумерологический разбор · 1 чакра</div>
+  </div>
+
+  <!-- Kaspi -->
+  <div class="pay-box">
+    <span style="font-size:26px;">📱</span>
+    <div class="pay-box-info">
+      <div class="pay-box-label">Kaspi по номеру</div>
+      <div class="pay-box-value">8 707 370 88 65</div>
+    </div>
+    <button class="copy-btn" onclick="copyText('87073708865', this)">КОПИРОВАТЬ</button>
+  </div>
+
+  <!-- Карта -->
+  <div class="pay-box" style="margin-bottom:20px;">
+    <span style="font-size:26px;">💳</span>
+    <div class="pay-box-info">
+      <div class="pay-box-label">Карта · INNA S.</div>
+      <div class="pay-box-value">4400 4303 3932 2718</div>
+    </div>
+    <button class="copy-btn" onclick="copyText('4400430339322718', this)">КОПИРОВАТЬ</button>
+  </div>
+
+  <button class="modal-btn" onclick="confirmPayment()" style="margin-top:0;">✅ Я оплатила — жду разбор</button>
+  <p class="modal-privacy" style="margin-top:12px;">Нажмите только после того как сделали перевод 🔮</p>
+</div>
+
+<!-- ШАГ 3: СПАСИБО -->
+<div id="step-thanks" style="display:none;text-align:center;padding:10px 0;">
+  <div style="font-size:56px;margin-bottom:16px;">✨</div>
+  <div style="font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:300;color:var(--gold-light);margin-bottom:12px;">Спасибо за оплату!</div>
+  <div style="font-size:14px;font-weight:300;color:var(--muted);line-height:1.8;margin-bottom:24px;">
+    Я получила уведомление.<br>
+    Свяжусь с вами в течение <strong style="color:var(--text);">15 минут</strong><br>
+    и пришлю ваш личный разбор 🔮
+  </div>
+  <a class="success-tg" href="https://t.me/innasavinumerology" target="_blank">
+    ✦ &nbsp; Подписаться на Telegram
+  </a>
+</div>
+```
+
+  </div>
+</div>
+
+<script>
+// Stars
+const starsEl = document.getElementById('stars');
+for (let i = 0; i < 120; i++) {
+  const s = document.createElement('div');
+  s.className = 'star';
+  const size = Math.random() * 2 + 0.5;
+  s.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${2+Math.random()*4}s;animation-delay:${Math.random()*5}s;opacity:${Math.random()*0.5};`;
+  starsEl.appendChild(s);
+}
+
+// Chakras
+const chakras = [
+  { name:'МУЛАДХАРА', sanskrit:'Muladhara · 1-я чакра · Корень', symbol:'🔴', color:'#e53935',
+    title:'Корневая чакра блокирует вашу финансовую энергию',
+    text:'Ваше число жизни указывает на нестабильность в базовых потребностях. Муладхара — фундамент, на котором стоит вся жизнь. Когда она заблокирована, деньги утекают сквозь пальцы, а ощущение безопасности ускользает даже при полном холодильнике.',
+    signs:['Деньги приходят — и сразу уходят, не задерживаясь','Хроническое ощущение нестабильности и тревоги о будущем','Трудно начинать новые дела — страх провала останавливает на старте','Усталость без причины, ощущение "земли уходит из-под ног"'],
+    cta:'Хотите узнать, почему деньги не задерживаются — и как открыть этот канал?' },
+  { name:'СВАДХИСТХАНА', sanskrit:'Svadhisthana · 2-я чакра · Сакральная', symbol:'🟠', color:'#fb8c00',
+    title:'Сакральная чакра блокирует близость и радость',
+    text:'Ваше число рождения резонирует со 2-й чакрой. Свадхистхана управляет удовольствием, творчеством и способностью создавать глубокую связь с людьми. Её блокировка — причина повторяющихся разочарований в отношениях.',
+    signs:['Отношения начинаются ярко, но быстро теряют энергию','Сложно говорить о своих желаниях — кажется, это эгоизм','Творческие идеи есть, но реализовать их не хватает сил','Притягиваете партнёров, которые берут, но не отдают'],
+    cta:'Хотите узнать, почему нужный партнёр не появляется — и что стоит между вами?' },
+  { name:'МАНИПУРА', sanskrit:'Manipura · 3-я чакра · Солнечное сплетение', symbol:'🟡', color:'#fdd835',
+    title:'Чакра силы блокирует вашу уверенность и успех',
+    text:'Число вашей судьбы связано с 3-й чакрой — центром личной силы. Вы много работаете, отдаёте всё — но результат не соответствует усилиям. Манипура не пропускает вашу внутреннюю силу наружу.',
+    signs:['Много работаете, но не чувствуете себя успешным','Сложно отстоять своё мнение в конфликте','Часто берёте на себя чужую ответственность','Ощущение, что вас не воспринимают всерьёз'],
+    cta:'Хотите понять, почему ваши усилия не конвертируются в признание и деньги?' },
+  { name:'АНАХАТА', sanskrit:'Anahata · 4-я чакра · Сердце', symbol:'💚', color:'#43a047',
+    title:'Чакра сердца не пропускает любовь внутрь',
+    text:'Ваше число жизненного пути указывает на блок в Анахате — чакре любви и принятия. Вы отдаёте любовь другим, но не позволяете любить себя. Это создаёт невидимую стену, которую чувствуют все.',
+    signs:['Легко заботитесь о других, но принять помощь — тяжело','В отношениях всегда больше вкладываете вы','Одиночество в толпе — знакомое ощущение','Деньги приходят только через огромные усилия'],
+    cta:'Хотите узнать, как блок в сердечной чакре влияет на ваши деньги и любовь?' },
+  { name:'ВИШУДХА', sanskrit:'Vishuddha · 5-я чакра · Горло', symbol:'🔵', color:'#1e88e5',
+    title:'Чакра горла блокирует вашу истинную силу',
+    text:'Ваш нумерологический код связан с 5-й чакрой. Вишудха — это голос, правда и умение обозначать границы. Когда она закрыта, деньги теряются там, где вы промолчали.',
+    signs:['Сложно говорить "нет" — даже когда очень нужно','Часто соглашаетесь с тем, что вас не устраивает','Слова застревают в горле в важный момент','Люди не воспринимают ваши слова с первого раза'],
+    cta:'Хотите узнать, сколько возможностей вы потеряли из-за того, что не сказали вовремя?' },
+  { name:'АДЖНА', sanskrit:'Ajna · 6-я чакра · Третий глаз', symbol:'🟣', color:'#8e24aa',
+    title:'Третий глаз блокирует вашу интуицию',
+    text:'Число вашей личности резонирует с Аджной — чакрой ясновидения и интуиции. Вы чувствуете людей и ситуации, но не доверяете своим ощущениям.',
+    signs:['Чувствуете, что что-то не так — но не слушаете это чувство','Принимаете решения, о которых потом жалеете','Головные боли, нарушения сна, "туман в голове"','Сложно видеть ситуацию на несколько шагов вперёд'],
+    cta:'Хотите узнать, как разблокировать интуицию и начать слышать свой внутренний голос?' },
+  { name:'САХАСРАРА', sanskrit:'Sahasrara · 7-я чакра · Корона', symbol:'⚪', color:'#b39ddb',
+    title:'Коронная чакра отрезает вас от потока',
+    text:'Ваш нумерологический код указывает на закрытую Сахасрару — соединение с высшим потоком. Ощущение, что кто-то другой живёт "в потоке", а вы — рядом, но не внутри.',
+    signs:['Ощущение отчуждённости — как будто наблюдаете жизнь со стороны','Сложно найти смысл и направление','Духовный поиск без ощущения прихода к чему-то','Возможности появляются, но не для вас — для других'],
+    cta:'Хотите войти в поток, где деньги и возможности приходят естественно?' }
+];
+
+function reduceToSingle(n) {
+  while (n > 7) { let s=0; while(n>0){s+=n%10;n=Math.floor(n/10);} n=s; }
+  return n;
+}
+
+function calculate() {
+  const day=parseInt(document.getElementById('inp-day').value);
+  const month=parseInt(document.getElementById('inp-month').value);
+  const year=parseInt(document.getElementById('inp-year').value);
+  const errEl=document.getElementById('error-msg');
+  if(!day||!month||!year||day<1||day>31||month<1||month>12||year<1920||year>2015){
+    errEl.style.display='block'; return;
+  }
+  errEl.style.display='none';
+  const str=String(day)+String(month)+String(year);
+  let total=0; for(const ch of str) total+=parseInt(ch);
+  const idx=reduceToSingle(total)-1;
+  const chakra=chakras[Math.max(0,Math.min(6,idx))];
+  document.documentElement.style.setProperty('--chakra-color',chakra.color);
+  document.getElementById('chakra-symbol').textContent=chakra.symbol;
+  document.getElementById('chakra-name').textContent=chakra.name;
+  document.getElementById('chakra-name').style.color=chakra.color;
+  document.getElementById('chakra-sanskrit').textContent=chakra.sanskrit;
+  document.getElementById('number-badge').textContent=idx+1;
+  document.getElementById('result-title').textContent=chakra.title;
+  document.getElementById('result-text').textContent=chakra.text;
+  document.getElementById('cta-text').textContent=chakra.cta;
+  const sl=document.getElementById('signs-list'); sl.innerHTML='';
+  chakra.signs.forEach(s=>{ sl.innerHTML+=`<div class="sign-item"><div class="sign-dot"></div><span>${s}</span></div>`; });
+  const r=document.getElementById('result'); r.classList.add('visible');
+  setTimeout(()=>r.scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+
+// Modal
+function openModal() {
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  showStep('step-form');
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+document.getElementById('modal-overlay').addEventListener('click', function(e){
+  if(e.target===this) closeModal();
+});
+function showStep(id) {
+  ['step-form','step-payment','step-thanks'].forEach(s=>{
+    document.getElementById(s).style.display = s===id ? 'block' : 'none';
+  });
+}
+
+function goToPayment() {
+  const name=document.getElementById('field-name').value.trim();
+  const contact=document.getElementById('field-contact').value.trim();
+  const errEl=document.getElementById('form-error');
+  if(!name||!contact){ errEl.style.display='block'; return; }
+  errEl.style.display='none';
+  // Отправить заявку в Telegram
+  const token='8751357245:AAGacyJg1pCBvfI5omKGfAIL6vim6tO-UzA';
+  const chatId='708287643';
+  const question=document.getElementById('field-question').value||'не указан';
+  const now=new Date().toLocaleString('ru-RU',{timeZone:'Asia/Almaty'});
+  const text=`🔮 Новая заявка на разбор!\n\n👤 Имя: ${name}\n📲 Контакт: ${contact}\n❓ Вопрос: ${question}\n🕐 Время (Алматы): ${now}\n\n⏳ Ожидает оплаты 8 490 ₸`;
+  fetch(`https://api.telegram.org/bot${token}/sendMessage`,{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({chat_id:chatId, text})
+  });
+  showStep('step-payment');
+}
+
+function confirmPayment() {
+  const name=document.getElementById('field-name').value.trim();
+  const contact=document.getElementById('field-contact').value.trim();
+  const token='8751357245:AAGacyJg1pCBvfI5omKGfAIL6vim6tO-UzA';
+  const chatId='708287643';
+  const now=new Date().toLocaleString('ru-RU',{timeZone:'Asia/Almaty'});
+  const text=`✅ ОПЛАТА ПОДТВЕРЖДЕНА!\n\n👤 Имя: ${name}\n📲 Контакт: ${contact}\n💰 Сумма: 8 490 ₸\n🕐 Время: ${now}\n\n👉 Свяжитесь с клиентом и отправьте разбор!`;
+  fetch(`https://api.telegram.org/bot${token}/sendMessage`,{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({chat_id:chatId, text})
+  });
+  showStep('step-thanks');
+}
+
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(()=>{
+    const orig=btn.textContent;
+    btn.textContent='✓ СКОПИРОВАНО';
+    btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent=orig; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+document.addEventListener('keydown', e=>{ if(e.key==='Enter') calculate(); });
+document.getElementById('inp-day').addEventListener('input', function(){ if(this.value.length>=2) document.getElementById('inp-month').focus(); });
+document.getElementById('inp-month').addEventListener('input', function(){ if(this.value.length>=2) document.getElementById('inp-year').focus(); });
+</script>
+
+</body>
+</html>
